@@ -5,7 +5,7 @@ pg.init()
 
 # Display surface
 WINDOW_WIDTH = 600
-WINDOW_HEIGHT = 300
+WINDOW_HEIGHT = 600
 display_surface = pg.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pg.display.set_caption("Collision Detection")  # Set the window title
 
@@ -13,8 +13,12 @@ FPS = 60
 clock = pg.time.Clock()
 
 # Set game Values
+LEVEL_UP = 10
 VELOCITY = 5
 SCORE = 0
+
+# Load sound effects
+sound_1 = pg.mixer.Sound("./assets/basic_tutorial_assets/sound_1.wav")
 
 # See All available system fonts
 fonts = pg.font.get_fonts()
@@ -34,9 +38,14 @@ dragon_image = pg.image.load("./assets/basic_tutorial_assets/dragon_right.png")
 dragon_rect = dragon_image.get_rect()
 dragon_rect.topleft = (25, 25)
 
+tiger_image = pg.image.load("./assets/basic_tutorial_assets/tiger.png")
+tiger_image = pg.transform.scale(tiger_image, (32, 32))
+tiger_rect = tiger_image.get_rect()
+tiger_active = False
+tiger_speed = 2
+
 coin_image = pg.image.load("./assets/basic_tutorial_assets/coin.png")
 coin_rect = coin_image.get_rect()
-coin_rect.center = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
 coins = [
     pg.Rect(
         random.randint(0, WINDOW_WIDTH - 32),
@@ -52,7 +61,7 @@ while running:
     for event in pg.event.get():
         if event.type == pg.QUIT:
             running = False
-
+    print(tiger_active)
     # Get a list of all keys currently being pressed down
     keys = pg.key.get_pressed()
 
@@ -65,24 +74,69 @@ while running:
     if keys[pg.K_DOWN] and dragon_rect.bottom < WINDOW_HEIGHT:
         dragon_rect.y += VELOCITY
 
+    # Fill display surface
+    display_surface.fill((0, 0, 0))
+
     # Check for collision between two rect
     for coin_rect in coins[:]:
         if dragon_rect.colliderect(coin_rect):
             SCORE += 1
-            coins.append(
-                pg.Rect(
-                    random.randint(0, WINDOW_WIDTH - 32),
-                    random.randint(0, WINDOW_HEIGHT - 32),
-                    32,
-                    32,
-                )
+            sound_1.play()
+            new_coin_pos = pg.Rect(
+                random.randint(0, WINDOW_WIDTH - 32),
+                random.randint(0, WINDOW_HEIGHT - 32),
+                32,
+                32,
             )
+            coins.append(new_coin_pos)
             coin_rect.left = random.randint(0, WINDOW_WIDTH - 32)
             coin_rect.top = random.randint(0, WINDOW_HEIGHT - 32)
             system_text = system_font.render(f"Score: {SCORE}", True, (255, 255, 255))
 
-    # Fill display surface
-    display_surface.fill((0, 0, 0))
+            # Reset to 1 every 100 multiple value and increase speed
+            if SCORE % LEVEL_UP == 0:
+                # Reset coins list
+                coins = [
+                    pg.Rect(
+                        random.randint(0, WINDOW_WIDTH - 32),
+                        random.randint(0, WINDOW_HEIGHT - 32),
+                        32,
+                        32,
+                    )
+                ]
+                # Increase dragon speed
+                VELOCITY += 1
+
+    # ENEMY FLOW
+    if SCORE % LEVEL_UP == 0 and SCORE > 0:
+        tiger_active = True
+        tiger_rect.center = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
+
+    if dragon_rect.colliderect(tiger_rect):
+        SCORE = 0
+        tiger_active = False
+        tiger_rect.center = (-100, -100)
+        coins = [
+            pg.Rect(
+                random.randint(0, WINDOW_WIDTH - 32),
+                random.randint(0, WINDOW_HEIGHT - 32),
+                32,
+                32,
+            )
+        ]
+        VELOCITY = 5
+
+    if tiger_active:
+        display_surface.blit(tiger_image, tiger_rect)
+        if tiger_rect.x < dragon_rect.x:
+            tiger_rect.x += tiger_speed
+        elif tiger_rect.x > dragon_rect.x:
+            tiger_rect.x -= tiger_speed
+
+        if tiger_rect.y < dragon_rect.y:
+            tiger_rect.y += tiger_speed
+        elif tiger_rect.y > dragon_rect.y:
+            tiger_rect.y -= tiger_speed
 
     for coin_rect in coins:
         display_surface.blit(coin_image, coin_rect)
