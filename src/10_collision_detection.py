@@ -13,7 +13,8 @@ FPS = 60
 clock = pg.time.Clock()
 
 # Set game Values
-LEVEL_UP = 10
+LEVEL_UP = 1000
+TIGER_APPEAR = 10
 VELOCITY = 5
 SCORE = 0
 
@@ -61,7 +62,6 @@ while running:
     for event in pg.event.get():
         if event.type == pg.QUIT:
             running = False
-    print(tiger_active)
     # Get a list of all keys currently being pressed down
     keys = pg.key.get_pressed()
 
@@ -108,12 +108,26 @@ while running:
                 VELOCITY += 1
 
     # ENEMY FLOW
-    if SCORE % LEVEL_UP == 0 and SCORE > 0:
+    if SCORE >= TIGER_APPEAR and not tiger_active:
         tiger_active = True
         tiger_rect.center = (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
 
-    if dragon_rect.colliderect(tiger_rect):
+    if tiger_active:
+        if tiger_rect.x < dragon_rect.x:
+            tiger_rect.x += tiger_speed
+        elif tiger_rect.x > dragon_rect.x:
+            tiger_rect.x -= tiger_speed
+        if tiger_rect.y < dragon_rect.y:
+            tiger_rect.y += tiger_speed
+        elif tiger_rect.y > dragon_rect.y:
+            tiger_rect.y -= tiger_speed
+
+    if tiger_active:
+        display_surface.blit(tiger_image, tiger_rect)
+
+    if tiger_active and dragon_rect.colliderect(tiger_rect):
         SCORE = 0
+        VELOCITY = 5
         tiger_active = False
         tiger_rect.center = (-100, -100)
         coins = [
@@ -124,19 +138,6 @@ while running:
                 32,
             )
         ]
-        VELOCITY = 5
-
-    if tiger_active:
-        display_surface.blit(tiger_image, tiger_rect)
-        if tiger_rect.x < dragon_rect.x:
-            tiger_rect.x += tiger_speed
-        elif tiger_rect.x > dragon_rect.x:
-            tiger_rect.x -= tiger_speed
-
-        if tiger_rect.y < dragon_rect.y:
-            tiger_rect.y += tiger_speed
-        elif tiger_rect.y > dragon_rect.y:
-            tiger_rect.y -= tiger_speed
 
     for coin_rect in coins:
         display_surface.blit(coin_image, coin_rect)
