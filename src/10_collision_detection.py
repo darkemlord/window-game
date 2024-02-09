@@ -96,6 +96,8 @@ while running:
             # Reset to 1 every 100 multiple value and increase speed
             if SCORE % LEVEL_UP == 0:
                 # Reset coins list
+                tiger_speed += 1
+                VELOCITY += 1
                 coins = [
                     pg.Rect(
                         random.randint(0, WINDOW_WIDTH - 32),
@@ -128,6 +130,7 @@ while running:
     if tiger_active and dragon_rect.colliderect(tiger_rect):
         SCORE = 0
         VELOCITY = 5
+        tiger_speed = 2
         tiger_active = False
         tiger_rect.center = (-100, -100)
         coins = [
